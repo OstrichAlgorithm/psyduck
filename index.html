@@ -39,6 +39,8 @@
 
     </div>
 
+    
+
     <div style="position:fixed;width: 0;display: none;" id="form">
       <input type="text" class="form__input" id="txt1" placeholder="快乐">
       <input type="text" class="form__input" id="txt2" placeholder="变美">
@@ -58,8 +60,19 @@
     </audio>
 
 
+  </div>
 
 
+  <div id="slider" style="
+  position: fixed;
+  top: 40%;
+  width: 100%;
+  height: 20px;
+  font-size: 40px;
+  text-align: center;
+  color: #fff;
+">
+  </div>
 
     <!-- Import maps polyfill -->
     <!-- Remove this when import maps will be widely supported -->
@@ -144,12 +157,20 @@
       controls.enablePan = false;
       controls.enableDamping = true;
 
+
+      const manager = new THREE.LoadingManager();
+			manager.onProgress = function ( item, loaded, total ) {
+				console.log( item, loaded, total );
+			};
       const dracoLoader = new DRACOLoader();
       // dracoLoader.setDecoderPath( 'js/libs/draco/gltf/' );
-      const loader = new GLTFLoader();
+      const loader = new GLTFLoader(manager);
       loader.setDRACOLoader(dracoLoader);
 
       loader.load('psyduck.glb', function (gltf) {
+
+
+        document.getElementById('slider').style.display='none';
         if (txt1 || txt2 || txt3 || txt4) {
           //是否渲染字
           gltf.scene.traverse(function (gl) {
@@ -195,10 +216,12 @@
 
         animate();
 
-      }, undefined, function (e) {
-
+      }, function ( xhr ) {
+        console.log(( xhr.loaded / xhr.total * 100 ) + '% 加载'  );
+        var str = ( xhr.loaded / xhr.total * 100 ) + '% 加载';
+        document.getElementById('slider').innerHTML=str;
+      }, function (e) {
         console.error(e);
-
       });
 
       //生成图片
