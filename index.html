@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>我的可达鸭@KF李</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+  <link type="text/css" rel="stylesheet" href="main.css">
+  <style>
+    body {
+      /* background-color: #bfe3dd;#E4EBF5 */
+      background-color: #E4EBF5;
+
+      color: #000;
+    }
+
+    a {
+      color: #2983ff;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div id="container">
+
+    <div class="components1" style="
+    position: fixed;
+    bottom: -16px;
+">
+      <div class="btn btn btn__secondary" onClick="playPause();" style="position: absolute;bottom: 48px;left: 28px;">
+        <p>BGM</p>
+      </div>
+      <div class="btn btn__primary" onClick="share();" style="position: absolute;bottom: 48px;left: 244px;">
+        <p>分享</p>
+      </div>
+
+
+
+    </div>
+
+    <div style="position:fixed;width: 0;display: none;" id="form">
+      <input type="text" class="form__input" id="txt1" placeholder="快乐">
+      <input type="text" class="form__input" id="txt2" placeholder="变美">
+      <input type="text" class="form__input" id="txt3" placeholder="暴富">
+      <input type="text" class="form__input" id="txt4" placeholder="六一">
+      <div class="btn btn__primary" onClick="create();">
+        <p> 生成分享网址</p>
+      </div>
+    </div>
+
+
+
+
+
+    <audio autoplay="autoplay" loop="loop" preload="auto" id="bgm" src="BGM.mp3">
+
+    </audio>
+
+
+
+
+
+    <!-- Import maps polyfill -->
+    <!-- Remove this when import maps will be widely supported -->
+    <script async src="https://unpkg.com/es-module-shims@1.3.6/dist/es-module-shims.js"></script>
+
+    <script type="importmap">
+			{
+				"imports": {
+					"three": "./three.module.js"
+				}
+			}
+		</script>
+
+    <script type="module">
+
+      import * as THREE from 'three';
+
+      import Stats from './stats.module.js';
+
+      import { OrbitControls } from './OrbitControls.js';
+      import { RoomEnvironment } from './RoomEnvironment.js';
+
+      import { GLTFLoader } from './GLTFLoader.js';
+      import { DRACOLoader } from './DRACOLoader.js';
+
+
+      import { FontLoader } from './FontLoader.js';
+      import { TextGeometry } from './TextGeometry.js';
+
+
+
+      function getQueryVariable(variable) {
+        var query = window.location.search.substring(1);
+        var vars = query.split("&");
+        for (var i = 0; i < vars.length; i++) {
+          var pair = vars[i].split("=");
+          if (pair[0] == variable) { 
+            return decodeURI(pair[1]); 
+          }
+        }
+        return '';
+      }
+
+      var txt1 = getQueryVariable('txt1');
+      var txt2 = getQueryVariable('txt2');
+      var txt3 = getQueryVariable('txt3');
+      var txt4 = getQueryVariable('txt4');
+      txt1?(document.getElementById('txt1').value=txt1):'';
+      txt2?(document.getElementById('txt2').value=txt2):'';
+      txt3?(document.getElementById('txt3').value=txt3):'';
+      txt4?(document.getElementById('txt4').value=txt4):'';
+
+
+
+      let mixer;
+
+      const clock = new THREE.Clock();
+      const container = document.getElementById('container');
+
+      // const stats = new Stats();
+      // container.appendChild(stats.dom);
+
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(window.devicePixelRatio);
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.outputEncoding = THREE.sRGBEncoding;
+      container.appendChild(renderer.domElement);
+
+      const pmremGenerator = new THREE.PMREMGenerator(renderer);
+
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xE4EBF5);
+
+      scene.environment = pmremGenerator.fromScene(new RoomEnvironment(), 0.04).texture;
+
+      const camera = new THREE.PerspectiveCamera(40, window.innerWidth / window.innerHeight, 1, 500);
+      camera.position.set(75, 25, 0);
+
+      const controls = new OrbitControls(camera, renderer.domElement);
+      controls.target.set(0, 0.5, 0);
+      controls.update();
+      controls.enablePan = false;
+      controls.enableDamping = true;
+
+      const dracoLoader = new DRACOLoader();
+      // dracoLoader.setDecoderPath( 'js/libs/draco/gltf/' );
+      const loader = new GLTFLoader();
+      loader.setDRACOLoader(dracoLoader);
+
+      loader.load('psyduck.glb', function (gltf) {
+        if (txt1 || txt2 || txt3 || txt4) {
+          //是否渲染字
+          gltf.scene.traverse(function (gl) {
+            var txt = ""
+            var img = '';
+            if (gl.type === 'Mesh') {
+              switch (gl.name) {
+                case "网格015":
+                  // txt = "德";
+                  txt = "txt2";
+                  break;
+                case "网格015_1":
+                  // txt = "诺克萨斯";
+                  txt = 'txt1'
+                  break;
+                case "网格017":
+                  // txt = "帅气";
+                  txt = "txt4";
+                  break;
+                case "网格017_1":
+                  // txt = "好可爱";
+                  txt = "txt3";
+                  break;
+                default: return;
+              }
+              var textureNormal = new THREE.TextureLoader().load(createImg(document.getElementById(txt).value));
+              gl.material = new THREE.MeshBasicMaterial({
+                map: textureNormal,
+                color: 0xffffff,
+                // color:THREE.Color.red
+                // normalScale: new THREE.Vector2(1, 1),
+              })
+            }
+          })
+        }
+
+        const model = gltf.scene;
+        model.position.set(0, 0, 0);
+        model.scale.set(5, 5, 5);
+        scene.add(model);
+        mixer = new THREE.AnimationMixer(model);
+        mixer.clipAction(gltf.animations[0]).play();
+
+        animate();
+
+      }, undefined, function (e) {
+
+        console.error(e);
+
+      });
+
+      //生成图片
+      function createImg(txt) {
+        let canvas = document.createElement("canvas");
+        let ctx = canvas.getContext('2d')
+        canvas.width = 1920
+        canvas.height = 1080
+        var size = 400;
+        var len = txt.length;
+        if (len == 1) {
+          size = 500;
+        } else if (len == 2) {
+          size = 400;
+        } else if (len == 3) {
+          size = 400;
+        } else if (len == 4) {
+          size = 250;
+        }
+        //制作矩形
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, 1920, 1080)
+        //设置文字
+        ctx.fillStyle = "black";
+        ctx.font = `normal ${size}px "楷体"`;
+
+        let strWidth = ctx.measureText(txt).width;
+        console.log(ctx.measureText(txt));
+        ctx.translate(canvas.width / 2 - strWidth / 2, canvas.height / 2 - 0.2 * size);
+        ctx.rotate(180 * Math.PI / 180);
+        ctx.scale(-1, 1);
+        ctx.fillText(txt, 0, 0);
+        //生成图片
+        let url = canvas.toDataURL('image/png');
+        return url
+      }
+
+      window.onresize = function () {
+
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+
+      };
+
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = clock.getDelta();
+        mixer.update(delta);
+        controls.update();
+        // stats.update();
+        renderer.render(scene, camera);
+      }
+
+
+      function getTextCanvas2(){
+      //用canvas生成图片
+        let canvas = document.createElement("canvas");
+        let ctx = canvas.getContext('2d')
+        canvas.width = 300
+        canvas.height = 300
+        //制作矩形
+        // ctx.fillStyle = "rgba(255,255,255,0)"; 
+        ctx.fillStyle = "#8abdff"; 
+        ctx.fillRect(0, 0, 300, 300)
+        //设置文字
+        ctx.fillStyle = "white";
+        ctx.font = 'normal 30px "楷体"'
+        ctx.fillText('抖音@KF李~干啥程序员', 0, 70)
+        ctx.fillText('公众号@KF李', 50, 170)
+        ctx.fillText('制作不易~给个关注喔！！！', 0, 270)
+        //生成图片
+        let url = canvas.toDataURL('image/png');
+        //将图片构建到纹理中
+        let geometry1 = new THREE.PlaneGeometry(15, 15)
+        let material1 = new THREE.MeshBasicMaterial({
+          map: new THREE.TextureLoader().load(url),
+          side: THREE.DoubleSide,
+          opacity: 1
+        })
+        let rect = new THREE.Mesh(geometry1, material1)
+        rect.position.set(0, 0.2,-2)
+        rect.rotation.set( 0.5 * Math.PI, 0, 0)
+
+        
+        scene.add(rect)
+      }
+      getTextCanvas2();
+
+    </script>
+    <script type="text/javascript">
+      function playPause() {
+        var music = document.getElementById('bgm');
+        var music_btn = document.getElementById('bgm_btn');
+        if (music.paused) {
+          music.play();
+        }
+        else {
+          music.pause();
+        }
+      }
+
+      function share() {
+        var visibility = document.getElementById("form").style.display;
+        console.log(visibility)
+        if (visibility == 'none') {
+          document.getElementById("form").style.display = 'block'
+        } else {
+          document.getElementById("form").style.display = 'none'
+        }
+      }
+      function create() {
+        var txt1 = document.getElementById("txt1").value;
+        var txt2 = document.getElementById("txt2").value;
+        var txt3 = document.getElementById("txt3").value;
+        var txt4 = document.getElementById("txt4").value;
+
+       if((txt1.length>4)||(txt2.length>4)||(txt3.length>4)||(txt4.length>4)){
+        alert('不要超过4个字')
+           return false;
+       }
+        window.location = `?txt1=${txt1}&txt2=${txt2}&txt3=${txt3}&txt4=${txt4}`
+      }
+      
+    </script>
+
+<script>
+  var _hmt = _hmt || [];
+  (function() {
+    var hm = document.createElement("script");
+    hm.src = "https://hm.baidu.com/hm.js?8b115f5c8c2af635d23133485cd7165a";
+    var s = document.getElementsByTagName("script")[0]; 
+    s.parentNode.insertBefore(hm, s);
+  })();
+  </script>
+  
+
+</body>
+
+</html>
