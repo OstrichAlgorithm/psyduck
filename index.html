@@ -218,7 +218,7 @@
 
       }, function ( xhr ) {
         console.log(( xhr.loaded / xhr.total * 100 ) + '% 加载'  );
-        var str = ( xhr.loaded / xhr.total * 100 ) + '% 加载';
+        var str = ( xhr.loaded / xhr.total * 100 ).toFixed(2) + '% 加载';
         document.getElementById('slider').innerHTML=str;
       }, function (e) {
         console.error(e);
